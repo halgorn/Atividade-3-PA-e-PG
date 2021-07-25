@@ -3,9 +3,10 @@
 <head>
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta http-equiv="X-UA-Compatible" content="IE=7">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link href="./bootstrap.min.css" rel="stylesheet">
-	<title>Trabalho Desenvolvimento I</title>
+	<link href="./static/bootstrap.min.css" rel="stylesheet">
+	<title>Trabalho Desenvolvimento Web I</title>
 </head>
 <body>
 	<div class="container p-4">
@@ -89,9 +90,9 @@
 					</button>
 				</div>
 			</div>
-			<div class="row">
+			<div class="row mb-2">
 				<div class="col">
-					<h3 class="mb-2">Resultado:</h3>
+					<h3 class="mb-2">Resultados:</h3>
 					<input
 						id="uploadArquivo"
 						class="form-control mb-4"
@@ -103,9 +104,11 @@
 				</div>
 			</div>
 		</form>
+		<canvas id="grafico"></canvas>
 	</div>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
-	<script>
+	<script src="./static/axios.min.js"></script>
+	<script src="./static/chart.min.js"></script>
+	<script >
 		function calcularMediana(termo = []) {
 			termo = termo.sort((a, b) => a - b)
 
@@ -155,7 +158,6 @@
           resultado += termo[i] + ', '
 					contg = contg + 1
 				}
-				console.log('resultado pg', resultado);
 			}
 
 			resultado = resultado.substring(0, resultado.length - 2)
@@ -188,23 +190,74 @@
 				const arquivo = event.target.files[0]
 				const leitor = new FileReader()
 
-				leitor.onload = function() {
+				leitor.onload = function () {
 					const dadosJson = JSON.parse(leitor.result);
 
-					document.getElementById('resultados').innerHTML = `
-						<div>A1: ${String(dadosJson.a1)}</div>
-						<div>Média: ${String(dadosJson.media)}</div>
-						<div>Quantidade de Elementos: ${String(dadosJson.quantidadeDeElementos)}</div>
-						<div>Razão: ${String(dadosJson.razao)}</div>
-						<div>Tipo: ${String(dadosJson.tipo)}</div>
-						<div>Mediana: ${String(dadosJson.mediana)}</div>
-						<div>Resultado: ${String(dadosJson.resultado)}</div>
-					`
+					if (dadosJson) {
+						document.getElementById('resultados').innerHTML = `
+							<div>A1: ${String(dadosJson.a1)}</div>
+							<div>Média: ${String(dadosJson.media)}</div>
+							<div>Quantidade de Elementos: ${String(dadosJson.quantidadeDeElementos)}</div>
+							<div>Razão: ${String(dadosJson.razao)}</div>
+							<div>Tipo: ${String(dadosJson.tipo)}</div>
+							<div>Mediana: ${String(dadosJson.mediana)}</div>
+							<div>Resultado: ${String(dadosJson.resultado)}</div>
+						`
+
+						gerarGrafico(dadosJson)
+					}
 				}
 
 				leitor.readAsText(arquivo);
 			}
 		)
+
+		function gerarGrafico(dados = {}) {
+			const { a1, media, quantidadeDeElementos, razao, mediana, tipo } = dados
+
+			const graficoRef = document.getElementById('grafico').getContext('2d')
+
+			new Chart(graficoRef, {
+				type: 'bar',
+				data: {
+					labels: ['A1', 'Média', 'Quantidade de elementos', 'Razão', 'Mediana'],
+					datasets: [{
+						label: 'Dados do Arquivo ' + tipo,
+						data: [
+							Number(a1),
+							Number(media),
+							Number(quantidadeDeElementos),
+							Number(razao),
+							Number(mediana),
+						],
+						backgroundColor: [
+							'rgba(255, 99, 132, 0.2)',
+							'rgba(54, 162, 235, 0.2)',
+							'rgba(255, 206, 86, 0.2)',
+							'rgba(75, 192, 192, 0.2)',
+							'rgba(153, 102, 255, 0.2)',
+							'rgba(255, 159, 64, 0.2)',
+						],
+						borderColor: [
+							'rgba(255, 99, 132, 1)',
+							'rgba(54, 162, 235, 1)',
+							'rgba(255, 206, 86, 1)',
+							'rgba(75, 192, 192, 1)',
+							'rgba(153, 102, 255, 1)',
+							'rgba(255, 159, 64, 1)',
+						],
+						borderWidth: 1,
+					}],
+				},
+				options: {
+					scales: {
+						y: {
+							beginAtZero: true,
+						},
+					},
+				},
+			})
+		}
 	</script>
 </body>
 </html>
