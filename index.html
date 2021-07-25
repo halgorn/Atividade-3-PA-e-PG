@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="./bootstrap.min.css" rel="stylesheet">
+	<title>Trabalho Desenvolvimento I</title>
+</head>
+<body>
+	<div class="container p-4">
+		<form>
+			<h1 class="text-center pb-4">Trabalho Desenvolvimento Web I</h1>
+			<div class="row mb-4">
+				<div class="col">
+					<input
+						id="a1"
+						class="form-control"
+						type="text"
+						placeholder="Primeiro termo"
+					/>
+				</div>
+				<div class="col">
+					<input
+						id="razao"
+						class="form-control"
+						type="text"
+						placeholder="Razão"
+					/>
+				</div>
+				<div class="col">
+					<input
+						id="quantidadeDeElementos"
+						class="form-control"
+						type="text"
+						placeholder="Quantidade de termos"
+					/>
+				</div>
+			</div>
+			<div class="row mb-4">
+				<div class="col">
+					<div class="form-check form-check-inline">
+						<input
+							id="tipo"
+							class="form-check-input"
+							name="tipo"
+							type="radio"
+							value="PA"
+							checked="checked"
+						/>
+						<label class="form-check-label" for="tipo">PA</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<input
+							id="tipo"
+							class="form-check-input"
+							name="tipo"
+							type="radio"
+							value="PG"
+						/>
+						<label class="form-check-label" for="tipo">PG</label>
+					</div>
+				</div>
+			</div>
+			<div class="row mb-4">
+				<div class="col">
+					<input
+						id="nomeDoArquivo"
+						class="form-control"
+						type="text"
+						placeholder="Nome do arquivo"
+					/>
+				</div>
+			</div>
+			<div class="row mb-2">
+				<div class="col">
+					<h4 id="mediaPA" class="d-inline">Média PA:</h4>
+					<span id="mediaPAResultado">0</span>
+				</div>
+				<div class="col">
+					<h4 id="mediaPG" class="d-inline">Média PG:</h4>
+					<span id="mediaPGResultado">0</span>
+				</div>
+			</div>
+			<div class="row mb-4">
+				<div class="col">
+					<button class="btn btn-primary" type="submit">
+						Gerar PA ou PG
+					</button>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<h3 class="mb-2">Resultado:</h3>
+					<input
+						id="uploadArquivo"
+						class="form-control mb-4"
+						type="file"
+						accept=".json"
+					>
+					<div id="resultados">
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+	<script>
+		function calcularMediana(termo = []) {
+			termo = termo.sort((a, b) => a - b)
+
+			const tamanho = termo.length;
+			const mediana = termo[((tamanho + 1) / 2) - 1];
+
+			return mediana
+		}
+
+		document.addEventListener('submit', (event) => {
+			event.preventDefault()
+
+			const a1 = document.getElementById('a1').value
+			const razao = document.getElementById('razao').value
+			const quantidadeDeElementos = document
+				.getElementById('quantidadeDeElementos').value
+			const tipo = document.querySelector('#tipo:checked').value
+			const nomeDoArquivo = document.getElementById('nomeDoArquivo').value
+
+			let termo = []
+			let cont = 1
+			let mediaPA = 0
+			let resultado = a1 + ', '
+			let aux = 0
+			let contg = 1
+			let mediaPG = 0
+			let auxg = 0
+
+			if (tipo === 'PA') {
+				for (i = 0; i <= quantidadeDeElementos; i++) {
+					if (i === 0 || i === 1) continue
+
+					termo[i] = a1 * 1 + ((i - 1) * razao)
+
+					mediaPA = termo[i] + mediaPA
+					resultado += termo[i] + ', '
+					cont++
+				}
+			} else {
+        for (i = 0; i <= quantidadeDeElementos; i++) {
+					if (i === 0 || i === 1) continue
+
+					if (i === 2) auxg = i
+
+					termo[i] = a1 * Math.pow(razao, i - 1)
+					mediaPG = termo[i] + mediaPG
+          resultado += termo[i] + ', '
+					contg = contg + 1
+				}
+				console.log('resultado pg', resultado);
+			}
+
+			resultado = resultado.substring(0, resultado.length - 2)
+			const mediana = calcularMediana(termo)
+
+			const dados = {
+				tipo,
+				a1,
+				razao,
+				quantidadeDeElementos,
+				resultado,
+				media: tipo === 'PA' ? mediaPA : mediaPG,
+				nomeDoArquivo,
+				mediana,
+			}
+
+			const mediaPARef = document.getElementById('mediaPAResultado')
+			const mediaPGRef = document.getElementById('mediaPGResultado')
+
+			if (mediaPA) mediaPARef.innerHTML = String(mediaPA)
+
+			if (mediaPG) mediaPGRef.innerHTML = String(mediaPG / contg)
+
+			axios.post('http://localhost/trab_json/servidor.php', dados)
+		})
+
+		document
+			.getElementById('uploadArquivo')
+			.addEventListener('change', (event) => {
+				const arquivo = event.target.files[0]
+				const leitor = new FileReader()
+
+				leitor.onload = function() {
+					const dadosJson = JSON.parse(leitor.result);
+
+					document.getElementById('resultados').innerHTML = `
+						<div>A1: ${String(dadosJson.a1)}</div>
+						<div>Média: ${String(dadosJson.media)}</div>
+						<div>Quantidade de Elementos: ${String(dadosJson.quantidadeDeElementos)}</div>
+						<div>Razão: ${String(dadosJson.razao)}</div>
+						<div>Tipo: ${String(dadosJson.tipo)}</div>
+						<div>Mediana: ${String(dadosJson.mediana)}</div>
+						<div>Resultado: ${String(dadosJson.resultado)}</div>
+					`
+				}
+
+				leitor.readAsText(arquivo);
+			}
+		)
+	</script>
+</body>
+</html>
